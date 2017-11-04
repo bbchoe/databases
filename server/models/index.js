@@ -15,15 +15,18 @@ module.exports = {
       });
     }, // a function which produces all the messages
     post: function (req, res) {
+      console.log('REQUEST BODY ----> ', req.body);
       var roomId;
       var userId;
 
       var messageQuery = function () {
         var messageString = `INSERT INTO messages (user, text, room) VALUES (${userId}, "${req.body.text}", ${roomId});`;
+        console.log('MESSAGE STRING FOR MESSAGE QUERY: ', messageString);
         db.query(messageString, function (err, results) {
           if (err) {
             throw err;
           } else {
+            console.log('MESSAGE QUERY RESULTS: ', results);
             res.send(results);
           }
         });        
@@ -63,7 +66,6 @@ module.exports = {
             }
           });
         } else {
-          console.log(results);
           userId = results.insertId;
           roomQuery();
         }        
@@ -77,14 +79,9 @@ module.exports = {
       
     },
     post: function (req, res) {
-      console.log('REQUEST.BODY ------> ', req.body);
       var userString = `INSERT INTO users (username) VALUES ("${req.body.username}");`;
       db.query(userString, function (err, results) {
-        if (err) {
-          console.log('USER ALREADY IN DATABASE ', err);
-        } else {
-          res.send(results);
-        }
+        res.send(results);
       });
     }
   }

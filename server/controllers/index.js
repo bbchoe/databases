@@ -18,7 +18,7 @@ module.exports = {
       models.users.get(req, res);
     },
     post: function (req, res) {
-      models.users.post(req.res);
+      models.users.post(req, res);
     }
   }
 };

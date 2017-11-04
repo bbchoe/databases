@@ -5,6 +5,8 @@ var mysql = require('mysql');
 var request = require('request'); // You might need to npm install the request module!
 var expect = require('chai').expect;
 
+var fs = require('fs');
+
 describe('Persistent Node Chat Server', function() {
   var dbConnection;
 
@@ -32,15 +34,15 @@ describe('Persistent Node Chat Server', function() {
     request({
       method: 'POST',
       uri: 'http://127.0.0.1:3000/classes/users',
-      json: { username: 'third Valjean' }
+      json: { username: 'Fifth Valjean' }
     }, function () {
       // Post a message to the node chat server:
       request({
         method: 'POST',
         uri: 'http://127.0.0.1:3000/classes/messages',
         json: {
-          username: 'second Valjean',
-          message: 'In mercy\'s name, three days is all I need.',
+          username: 'Valjean',
+          text: 'In mercy\'s name, three days is all I need.',
           roomname: 'Hello'
         }
       }, function () {
@@ -54,6 +56,7 @@ describe('Persistent Node Chat Server', function() {
 
         dbConnection.query(queryString, queryArgs, function(err, results) {
           // Should have one result:
+          
           expect(results.length).to.equal(1);
 
           // TODO: If you don't have a column named text, change this test.
@@ -67,21 +70,31 @@ describe('Persistent Node Chat Server', function() {
 
   it('Should output all messages from the DB', function(done) {
     // Let's insert a message into the db
+    request({
+      method: 'POST',
+      uri: 'http://127.0.0.1:3000/classes/messages',
+      json: {
+        username: 3,
+        text: 'Men like you can never change!',
+        roomname: 'main'
+      }
+    });
+
     var queryString = 'select * from messages';
     var queryArgs = [];
     // TODO - The exact query string and query args to use
     // here depend on the schema you design, so I'll leave
     // them up to you. */
 
-    dbConnection.query(queryString, queryArgs, function(err) {
+    dbConnection.query(queryString, queryArgs, function(err, data) {
       if (err) { throw err; }
-
       // Now query the Node chat server and see if it returns
       // the message we just inserted:
       request('http://127.0.0.1:3000/classes/messages', function(error, response, body) {
         var messageLog = JSON.parse(body);
+        fs.writeFileSync('./log', body);
         expect(messageLog[0].text).to.equal('Men like you can never change!');
-        expect(messageLog[0].roomname).to.equal('main');
+        expect(messageLog[0].room).to.equal(26);
         done();
       });
     });
