@@ -15,56 +15,84 @@ module.exports = {
       });
     }, // a function which produces all the messages
     post: function (req, res) {
-      // var queryString = `BEGIN;
-      //   INSERT INTO messages (text) VALUES ('${req.body.text}');
-      //   INSERT INTO users (username) VALUES ('${req.body.username}');
-      //   INSERT INTO rooms (roomname) VALUES ('${req.body.roomname}');
-      // COMMIT;`;
-
-      // var queryString = 
-      // `BEGIN;
-      //   insert into users (username) select '${req.body.username}' from users where not exists( select username from users where username = '${req.body.username}') limit 1;
-      //   insert into rooms (roomname) select '${req.body.roomname}' from rooms where not exists( select roomname from rooms where roomname = '${req.body.roomname}') limit 1;
-      // COMMIT;`
       var roomId;
       var userId;
 
+      var messageQuery = function () {
+        var messageString = `INSERT INTO messages (user, text, room) VALUES (${userId}, "${req.body.text}", ${roomId});`;
+        db.query(messageString, function (err, results) {
+          if (err) {
+            throw err;
+          } else {
+            res.send(results);
+          }
+        });        
+      };
+      
+      var roomQuery = function () {
+        var roomString = `INSERT INTO rooms (roomname) VALUES ("${req.body.roomname}");`;
+        db.query(roomString, function (err, results) {
+          if (err) {
+            var roomString = `select room_id from rooms where roomname = "${req.body.roomname}";`;
+            db.query(roomString, function (err, results) {
+              if (err) {
+                throw err;
+              } else {
+                roomId = results[0].room_id;
+                messageQuery();
+              }
+            });
+          } else {
+            console.log('new room: ', results);
+            roomId = results.insertId;
+            messageQuery();
+          }
+        });
+      };
+      
       var userString = `INSERT INTO users (username) VALUES ("${req.body.username}");`;
       db.query(userString, function (err, results) {
         if (err) {
-          var userString = `select user_id from users where username = "${req.body.username}";`; 
-          db.query(userString, function (err, results) {
+          var userString = 'select user_id from users where username = ?;'; 
+          db.query(userString, [req.body.username], function (err, results) {
             if (err) {
               throw err;
             } else {
-              console.log('INNER ERROR :', results);
-              userId = null;
+              userId = results[0].user_id;
+              roomQuery();
             }
           });
         } else {
-          console.log('OUTER ERROR: ', results);
-          userId = null;
-        }
+          console.log(results);
+          userId = results.insertId;
+          roomQuery();
+        }        
       });
-
-      var roomString = `INSERT INTO rooms (roomname) VALUES ("${req.body.roomname}");`;
-      db.query(roomString, function (err, results) {
-        if (err) {
-          var roomString = `select room_id from rooms where roomname = "${req.body.roomname}";`;
-          db.query(roomString, function (err, results) {
-          });
-        }
-      });
-    } // a function which can be used to insert a message into the database
+    }
   },
 
   users: {
     // Ditto as above.
-    get: function () {},
-    post: function () {}
+    get: function (req, res) {
+      
+    },
+    post: function (req, res) {
+      console.log('REQUEST.BODY ------> ', req.body);
+      var userString = `INSERT INTO users (username) VALUES ("${req.body.username}");`;
+      db.query(userString, function (err, results) {
+        if (err) {
+          console.log('USER ALREADY IN DATABASE ', err);
+        } else {
+          res.send(results);
+        }
+      });
+    }
   }
 };
 
-module.exports.messages.post();
+
+
+
+// module.exports.messages.post();
 
 

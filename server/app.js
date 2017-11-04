@@ -21,6 +21,8 @@ app.use(parser.urlencoded({
   extended: true
 }));
 
+app.use(parser.json());
+
 // Set up our routes
 app.use('/classes', router);
 
